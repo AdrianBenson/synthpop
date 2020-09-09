@@ -23,10 +23,10 @@ def _drop_zeros(df):
 
     """
     def for_each_col(col):
-        nz = col.nonzero()[0]
+        nz = col.to_numpy().nonzero()[0]
         return col[nz], nz
 
-    for (col_idx, (col, nz)) in df.apply(for_each_col, axis=0, raw=True).items():
+    for (col_idx, (col, nz)) in df.apply(lambda row: for_each_col(row), axis=1).items():
         yield (col_idx, col, nz)
 
 
