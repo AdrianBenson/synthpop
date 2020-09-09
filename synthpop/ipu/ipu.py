@@ -26,7 +26,7 @@ def _drop_zeros(df):
         nz = col.to_numpy().nonzero()[0]
         return col[nz], nz
 
-    for (col_idx, (col, nz)) in df.apply(lambda row: for_each_col(row), axis=1).items():
+    for (col_idx, (col, nz)) in df.apply(lambda row: for_each_col(row), axis=0).items():
         yield (col_idx, col, nz)
 
 
