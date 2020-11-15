@@ -12,11 +12,10 @@ from synthpop.ipf.ipf import calculate_constraints
 from synthpop.ipu.ipu import household_weights
 
 logger = logging.getLogger("synthpop")
-FitQuality = namedtuple(
-    'FitQuality',
-    ('people_chisq', 'people_p'))
+FitQuality = namedtuple("FitQuality", ("people_chisq", "people_p"))
 BlockGroupID = namedtuple(
-    'BlockGroupID', ('state', 'county', 'tract', 'block_group'))
+    "BlockGroupID", ("state", "county", "tract", "block_group")
+)
 
 
 def enable_logging():
@@ -25,8 +24,17 @@ def enable_logging():
     logger.setLevel(logging.DEBUG)
 
 
-def synthesize(h_marg, p_marg, h_jd, p_jd, h_pums, p_pums,
-               marginal_zero_sub=.01, jd_zero_sub=.001, hh_index_start=0):
+def synthesize(
+    h_marg,
+    p_marg,
+    h_jd,
+    p_jd,
+    h_pums,
+    p_pums,
+    marginal_zero_sub=0.01,
+    jd_zero_sub=0.001,
+    hh_index_start=0,
+):
 
     # this is the zero marginal problem
     h_marg = h_marg.replace(0, marginal_zero_sub)
@@ -53,25 +61,25 @@ def synthesize(h_marg, p_marg, h_jd, p_jd, h_pums, p_pums,
     logger.debug(p_constraint)
 
     # modify person cat ids so they are unique when combined with households
-    p_starting_cat_id = h_jd['cat_id'].max() + 1
-    p_jd['cat_id'] += p_starting_cat_id
-    p_pums['cat_id'] += p_starting_cat_id
+    p_starting_cat_id = h_jd["cat_id"].max() + 1
+    p_jd["cat_id"] += p_starting_cat_id
+    p_pums["cat_id"] += p_starting_cat_id
     p_constraint.index = p_jd.cat_id
 
     # make frequency tables that the ipu expects
-    household_freq, person_freq = cat.frequency_tables(p_pums, h_pums,
-                                                       p_jd.cat_id,
-                                                       h_jd.cat_id)
+    household_freq, person_freq = cat.frequency_tables(
+        p_pums, h_pums, p_jd.cat_id, h_jd.cat_id
+    )
 
     # do the ipu to match person marginals
     logger.info("Running ipu")
     import time
+
     t1 = time.time()
-    best_weights, fit_quality, iterations = household_weights(household_freq,
-                                                              person_freq,
-                                                              h_constraint,
-                                                              p_constraint)
-    logger.info("Time to run ipu: %.3fs" % (time.time()-t1))
+    best_weights, fit_quality, iterations = household_weights(
+        household_freq, person_freq, h_constraint, p_constraint
+    )
+    logger.info("Time to run ipu: %.3fs" % (time.time() - t1))
 
     logger.debug("IPU weights:")
     logger.debug(best_weights.describe())
@@ -83,15 +91,27 @@ def synthesize(h_marg, p_marg, h_jd, p_jd, h_pums, p_pums,
     num_households = int(h_marg.groupby(level=0).sum().mean())
     print("Drawing %d households" % num_households)
 
-    best_chisq = np.inf
+    # best_chisq = np.inf
 
     return draw.draw_households(
-        num_households, h_pums, p_pums, household_freq, h_constraint,
-        p_constraint, best_weights, hh_index_start=hh_index_start)
+        num_households,
+        h_pums,
+        p_pums,
+        household_freq,
+        h_constraint,
+        p_constraint,
+        best_weights,
+        hh_index_start=hh_index_start,
+    )
 
 
-def synthesize_all(recipe, num_geogs=None, indexes=None,
-                   marginal_zero_sub=.01, jd_zero_sub=.001):
+def synthesize_all(
+    recipe,
+    num_geogs=None,
+    indexes=None,
+    marginal_zero_sub=0.01,
+    jd_zero_sub=0.001,
+):
     """
     Returns
     -------
@@ -102,8 +122,11 @@ def synthesize_all(recipe, num_geogs=None, indexes=None,
         and ``people_p``.
 
     """
-    print("Synthesizing at geog level: '{}' (number of geographies is {})"
-          .format(recipe.get_geography_name(), recipe.get_num_geographies()))
+    print(
+        "Synthesizing at geog level: '{}' (number of geographies is {})".format(
+            recipe.get_geography_name(), recipe.get_num_geographies()
+        )
+    )
 
     if indexes is None:
         indexes = recipe.get_available_geography_ids()
@@ -126,8 +149,7 @@ def synthesize_all(recipe, num_geogs=None, indexes=None,
         logger.debug("Person marginal")
         logger.debug(p_marg)
 
-        h_pums, h_jd = recipe.\
-            get_household_joint_dist_for_geography(geog_id)
+        h_pums, h_jd = recipe.get_household_joint_dist_for_geography(geog_id)
         logger.debug("Household joint distribution")
         logger.debug(h_jd)
 
@@ -135,11 +157,17 @@ def synthesize_all(recipe, num_geogs=None, indexes=None,
         logger.debug("Person joint distribution")
         logger.debug(p_jd)
 
-        households, people, people_chisq, people_p = \
-            synthesize(
-                h_marg, p_marg, h_jd, p_jd, h_pums, p_pums,
-                marginal_zero_sub=marginal_zero_sub, jd_zero_sub=jd_zero_sub,
-                hh_index_start=hh_index_start)
+        households, people, people_chisq, people_p = synthesize(
+            h_marg,
+            p_marg,
+            h_jd,
+            p_jd,
+            h_pums,
+            p_pums,
+            marginal_zero_sub=marginal_zero_sub,
+            jd_zero_sub=jd_zero_sub,
+            hh_index_start=hh_index_start,
+        )
 
         # Append location identifiers to the synthesized households
         for geog_cat in geog_id.keys():
@@ -148,8 +176,11 @@ def synthesize_all(recipe, num_geogs=None, indexes=None,
         hh_list.append(households)
         people_list.append(people)
         key = BlockGroupID(
-            geog_id['state'], geog_id['county'], geog_id['tract'],
-            geog_id['block group'])
+            geog_id["state"],
+            geog_id["county"],
+            geog_id["tract"],
+            geog_id["block group"],
+        )
         fit_quality[key] = FitQuality(people_chisq, people_p)
 
         cnt += 1

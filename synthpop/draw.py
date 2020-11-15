@@ -62,20 +62,20 @@ def _draw_indexes(num, fac, weights):
 
         if flr_constraint > 0:
             wts = weights.values[nz]
-            idx.extend(
-                simple_draw(flr_constraint, wts, weights.index.values[nz]))
+            idx.extend(simple_draw(flr_constraint, wts, weights.index.values[nz]))
 
     if len(idx) < num:
         num_to_add = num - len(idx)
 
         if num_to_add > len(weights):
             raise RuntimeError(
-                'There is a mismatch between the constraints and the total '
-                'number of households to draw. The total to draw appears '
-                'to be higher than indicated by the constraints.')
+                "There is a mismatch between the constraints and the total "
+                "number of households to draw. The total to draw appears "
+                "to be higher than indicated by the constraints."
+            )
 
-        constraint_diffs = sorted(
-            constraint_diffs, key=lambda x: x[1], reverse=True)[:num_to_add]
+        constraint_diffs = sorted(constraint_diffs, key=lambda x: x[1], reverse=True)
+        constraint_diffs = constraint_diffs[:num_to_add]
 
         for col_name, _ in constraint_diffs:
             _, _, _, nz = fac.get_column(col_name)
@@ -116,10 +116,9 @@ def execute_draw(indexes, h_pums, p_pums, hh_index_start=0):
     synth_hh.index += hh_index_start
 
     mrg_tbl = pd.DataFrame(
-        {'serialno': synth_hh.serialno.values,
-         'hh_id': synth_hh.index.values})
-    synth_people = pd.merge(
-        p_pums, mrg_tbl, left_on='serialno', right_on='serialno')
+        {"serialno": synth_hh.serialno.values, "hh_id": synth_hh.index.values}
+    )
+    synth_people = pd.merge(p_pums, mrg_tbl, left_on="serialno", right_on="serialno")
 
     return synth_hh, synth_people
 
@@ -156,7 +155,8 @@ def compare_to_constraints(synth, constraints):
     # in the constraints but not in the counts
     diff = constraints.index.difference(counts.index)
     counts = counts.combine_first(
-        pd.Series(np.zeros(len(diff), dtype='int'), index=diff))
+        pd.Series(np.zeros(len(diff), dtype="int"), index=diff)
+    )
 
     counts, constraints = counts.align(constraints)
 
@@ -168,8 +168,15 @@ def compare_to_constraints(synth, constraints):
 
 
 def draw_households(
-        num, h_pums, p_pums, household_freq, household_constraints,
-        person_constraints, weights, hh_index_start=0):
+    num,
+    h_pums,
+    p_pums,
+    household_freq,
+    household_constraints,
+    person_constraints,
+    weights,
+    hh_index_start=0,
+):
     """
     Draw households and persons according to weights from the IPU.
 
@@ -212,8 +219,10 @@ def draw_households(
     if num == 0:
         return (
             pd.DataFrame(columns=h_pums.columns),
-            pd.DataFrame(columns=p_pums.columns.append(pd.Index(['hh_id']))),
-            0, 1)
+            pd.DataFrame(columns=p_pums.columns.append(pd.Index(["hh_id"]))),
+            0,
+            1,
+        )
 
     fac = _FrequencyAndConstraints(household_freq, household_constraints)
 
@@ -222,9 +231,11 @@ def draw_households(
     for _ in range(20):
         indexes = _draw_indexes(num, fac, weights)
         synth_hh, synth_people = execute_draw(
-            indexes, h_pums, p_pums, hh_index_start=hh_index_start)
+            indexes, h_pums, p_pums, hh_index_start=hh_index_start
+        )
         people_chisq, people_p = compare_to_constraints(
-            synth_people.cat_id, person_constraints)
+            synth_people.cat_id, person_constraints
+        )
 
         if people_chisq < best_chisq:
             best_chisq = people_chisq

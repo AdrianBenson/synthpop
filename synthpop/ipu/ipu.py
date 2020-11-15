@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from __future__ import division
+# from __future__ import division
 
 import itertools
 from collections import OrderedDict
@@ -21,6 +21,7 @@ def _drop_zeros(df):
     df : pandas.DataFrame
 
     """
+
     def for_each_col(col):
         nz = col.nonzero()[0]
         return col[nz], nz
@@ -63,20 +64,31 @@ class _FrequencyAndConstraints(object):
         Total number of columns across household and person classes.
 
     """
-    def __init__(self, household_freq, household_constraints, person_freq=None,
-                 person_constraints=None):
-        hh_cols = ((key, col, household_constraints[key], nz)
-                   for key, col, nz in _drop_zeros(household_freq))
+
+    def __init__(
+        self,
+        household_freq,
+        household_constraints,
+        person_freq=None,
+        person_constraints=None,
+    ):
+        hh_cols = (
+            (key, col, household_constraints[key], nz)
+            for key, col, nz in _drop_zeros(household_freq)
+        )
 
         has_pers = person_freq is not None and person_constraints is not None
         if has_pers:
-            p_cols = ((key, col, person_constraints[key], nz)
-                      for key, col, nz in _drop_zeros(person_freq))
+            p_cols = (
+                (key, col, person_constraints[key], nz)
+                for key, col, nz in _drop_zeros(person_freq)
+            )
         else:
             p_cols = []
 
         self._everything = OrderedDict(
-            (t[0], t) for t in itertools.chain(hh_cols, p_cols))
+            (t[0], t) for t in itertools.chain(hh_cols, p_cols)
+        )
         self.ncols = len(self._everything)
 
         """
@@ -158,10 +170,13 @@ def _average_fit_quality(freq_wrap, weights):
         Array of weights for all households.
 
     """
-    return sum(
-        _fit_quality(col, weights[nz], constraint)
-        for _, col, constraint, nz in freq_wrap.iter_columns()
-        ) / freq_wrap.ncols
+    return (
+        sum(
+            _fit_quality(col, weights[nz], constraint)
+            for _, col, constraint, nz in freq_wrap.iter_columns()
+        )
+        / freq_wrap.ncols
+    )
 
 
 def _update_weights(column, weights, constraint):
@@ -192,8 +207,13 @@ def _update_weights(column, weights, constraint):
 
 
 def household_weights(
-        household_freq, person_freq, household_constraints, person_constraints,
-        convergence=1e-4, max_iterations=20000):
+    household_freq,
+    person_freq,
+    household_constraints,
+    person_constraints,
+    convergence=1e-4,
+    max_iterations=20000,
+):
     """
     Calculate the household weights that best match household and
     person level attributes.
@@ -233,11 +253,12 @@ def household_weights(
         Number of iterations made.
 
     """
-    weights = np.ones(len(household_freq), dtype='float')
+    weights = np.ones(len(household_freq), dtype="float")
     best_weights = weights.copy()
 
     freq_wrap = _FrequencyAndConstraints(
-        household_freq, household_constraints, person_freq, person_constraints)
+        household_freq, household_constraints, person_freq, person_constraints
+    )
 
     fit_qual = _average_fit_quality(freq_wrap, weights)
     best_fit_qual = fit_qual
@@ -260,9 +281,13 @@ def household_weights(
 
         if iterations > max_iterations:
             raise RuntimeError(
-                'Maximum number of iterations reached during IPU: {}'.format(
-                    max_iterations))
+                "Maximum number of iterations reached during IPU: {}".format(
+                    max_iterations
+                )
+            )
 
     return (
         pd.Series(best_weights, index=household_freq.index),
-        best_fit_qual, iterations)
+        best_fit_qual,
+        iterations,
+    )

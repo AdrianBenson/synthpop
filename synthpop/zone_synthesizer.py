@@ -9,8 +9,9 @@ from synthpop.synthesizer import synthesize
 from synthpop import categorizer as cat
 
 
-def load_data(hh_marginal_file, person_marginal_file,
-              hh_sample_file, person_sample_file):
+def load_data(
+    hh_marginal_file, person_marginal_file, hh_sample_file, person_sample_file
+):
     """
     Load and process data inputs from .csv files on disk
 
@@ -24,6 +25,7 @@ def load_data(hh_marginal_file, person_marginal_file,
         path to a csv file of sample household records to be drawn from
     person_sample_file : string
         path to a csv file of sample person records
+
     Returns
     -------
     hh_marg : pandas.DataFrame
@@ -40,16 +42,19 @@ def load_data(hh_marginal_file, person_marginal_file,
     hh_sample = pd.read_csv(hh_sample_file)
     p_sample = pd.read_csv(person_sample_file)
 
-    hh_marg = pd.read_csv(hh_marginal_file, header=[0, 1], index_col=0)
-    hh_marg.columns.levels[0].name = 'cat_name'
-    hh_marg.columns.levels[1].name = 'cat_values'
+    colnames = ["cat_name", "cat_values"]
+    hh_marg = pd.read_csv(hh_marginal_file, header=[0, 1])
+    idx_name = hh_marg.columns[0][0]
+    hh_marg.set_index(hh_marg.columns[0], inplace=True)
+    hh_marg.rename_axis(index=idx_name, columns=colnames, inplace=True)
 
     xwalk = list(zip(hh_marg.index, hh_marg.sample_geog.unstack().values))
-    hh_marg = hh_marg.drop('sample_geog', axis=1, level=0)
+    hh_marg = hh_marg.drop("sample_geog", axis=1, level=0)
 
-    p_marg = pd.read_csv(person_marginal_file, header=[0, 1], index_col=0)
-    p_marg.columns.levels[0].name = 'cat_name'
-    p_marg.columns.levels[1].name = 'cat_values'
+    p_marg = pd.read_csv(person_marginal_file, header=[0, 1])
+    idx_name = p_marg.columns[0][0]
+    p_marg.set_index(p_marg.columns[0], inplace=True)
+    p_marg.rename_axis(index=idx_name, columns=colnames, inplace=True)
 
     return hh_marg, p_marg, hh_sample, p_sample, xwalk
 
@@ -70,6 +75,7 @@ def synthesize_all_zones(hh_marg, p_marg, hh_sample, p_sample, xwalk):
         person sample table
     xwalk : list of tuples
         list of marginal-to-sample geography crosswalks to iterate over
+
     Returns
     -------
     all_households : pandas.DataFrame
@@ -82,16 +88,17 @@ def synthesize_all_zones(hh_marg, p_marg, hh_sample, p_sample, xwalk):
     hh_list = []
     people_list = []
     stats_list = []
-    hh_index_start = 1
+    # hh_index_start = 1
     for geogs in xwalk:
-        households, people, stats = synthesize_zone(hh_marg, p_marg,
-                                                    hh_sample, p_sample, geogs)
+        households, people, stats = synthesize_zone(
+            hh_marg, p_marg, hh_sample, p_sample, geogs
+        )
         stats_list.append(stats)
         hh_list.append(households)
         people_list.append(people)
 
-        if len(households) > 0:
-            hh_index_start = households.index.values[-1] + 1
+        # if len(households) > 0:
+        #     hh_index_start = households.index.values[-1] + 1
     all_households = pd.concat(hh_list)
     all_persons = pd.concat(people_list)
     all_households, all_persons = synch_hhids(all_households, all_persons)
@@ -109,6 +116,7 @@ def synch_hhids(households, persons):
         full households table with id values sequential by geog
     persons : pandas.DataFrame
         full persons table with id values sequential by geog
+
     Returns
     -------
     households : pandas.DataFrame
@@ -116,14 +124,18 @@ def synch_hhids(households, persons):
     persons : pandas.DataFrame
         persons table synchronized with updated household ids
     """
-    households['hh_id'] = households.index
-    households['household_id'] = range(1, len(households.index)+1)
+    households["hh_id"] = households.index
+    households["household_id"] = range(1, len(households.index) + 1)
     persons = pd.merge(
-            persons, households[['household_id', 'geog', 'hh_id']],
-            how='left', left_on=['geog', 'hh_id'], right_on=['geog', 'hh_id'],
-            suffixes=('', '_x')).drop('hh_id', axis=1)
-    households.set_index('household_id', inplace=True)
-    households.drop('hh_id', axis=1, inplace=True)
+        persons,
+        households[["household_id", "geog", "hh_id"]],
+        how="left",
+        left_on=["geog", "hh_id"],
+        right_on=["geog", "hh_id"],
+        suffixes=("", "_x"),
+    ).drop("hh_id", axis=1)
+    households.set_index("household_id", inplace=True)
+    households.drop("hh_id", axis=1, inplace=True)
     return households, persons
 
 
@@ -143,6 +155,7 @@ def synthesize_zone(hh_marg, p_marg, hh_sample, p_sample, xwalk):
         person sample table
     xwalk : tuple
         tuple of marginal-to-sample geography crosswalk
+
     Returns
     -------
     households : pandas.DataFrame
@@ -153,22 +166,31 @@ def synthesize_zone(hh_marg, p_marg, hh_sample, p_sample, xwalk):
         chi-square and p-score values for marginal geography drawn
     """
     hhs, hh_jd = cat.joint_distribution(
-            hh_sample[hh_sample.sample_geog == xwalk[1]],
-            cat.category_combinations(hh_marg.columns))
+        hh_sample[hh_sample.sample_geog == xwalk[1]],
+        cat.category_combinations(hh_marg.columns),
+    )
     ps, p_jd = cat.joint_distribution(
-            p_sample[p_sample.sample_geog == xwalk[1]],
-            cat.category_combinations(p_marg.columns))
+        p_sample[p_sample.sample_geog == xwalk[1]],
+        cat.category_combinations(p_marg.columns),
+    )
     households, people, people_chisq, people_p = synthesize(
-            hh_marg.loc[xwalk[0]], p_marg.loc[xwalk[0]], hh_jd, p_jd, hhs, ps,
-            hh_index_start=1)
-    households['geog'] = xwalk[0]
-    people['geog'] = xwalk[0]
-    stats = {'geog': xwalk[0], 'chi-square': people_chisq, 'p-score': people_p}
+        hh_marg.loc[xwalk[0]],
+        p_marg.loc[xwalk[0]],
+        hh_jd,
+        p_jd,
+        hhs,
+        ps,
+        hh_index_start=1,
+    )
+    households["geog"] = xwalk[0]
+    people["geog"] = xwalk[0]
+    stats = {"geog": xwalk[0], "chi-square": people_chisq, "p-score": people_p}
     return households, people, stats
 
 
-def multiprocess_synthesize(hh_marg, p_marg, hh_sample,
-                            p_sample, xwalk, cores=False):
+def multiprocess_synthesize(
+    hh_marg, p_marg, hh_sample, p_sample, xwalk, cores=False
+):
     """
     Synthesize for a set of marginal geographies via multiprocessing
 
@@ -187,6 +209,7 @@ def multiprocess_synthesize(hh_marg, p_marg, hh_sample,
     cores : integer, optional
         number of cores to use in the multiprocessing pool. defaults to
         multiprocessing.cpu_count() - 1
+
     Returns
     -------
     all_households : pandas.DataFrame
@@ -196,7 +219,7 @@ def multiprocess_synthesize(hh_marg, p_marg, hh_sample,
     all_stats : pandas.DataFrame
         chi-square and p-score values for each marginal geography drawn
     """
-    cores = cores if cores else (multiprocessing.cpu_count()-1)
+    cores = cores if cores else (multiprocessing.cpu_count() - 1)
     part = partial(synthesize_zone, hh_marg, p_marg, hh_sample, p_sample)
     p = multiprocessing.Pool(cores)
     results = p.map(part, list(xwalk))

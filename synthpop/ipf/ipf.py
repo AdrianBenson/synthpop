@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_constraints(
-        marginals, joint_dist, tolerance=1e-3, max_iterations=1000):
+def calculate_constraints(marginals, joint_dist, tolerance=1e-3, max_iterations=1000):
     """
     Calculate constraints on household or person classes using
     single category marginals and the observed class proportions
@@ -43,7 +42,7 @@ def calculate_constraints(
     """
     flat_joint_dist = joint_dist.reset_index()
 
-    constraints = joint_dist.values.copy().astype('float')
+    constraints = joint_dist.values.copy().astype("float")
     prev_constraints = constraints.copy()
     prev_constraints += tolerance  # ensure we run at least one iteration
 
@@ -67,7 +66,7 @@ def calculate_constraints(
 
         if iterations > max_iterations:
             raise RuntimeError(
-                'Maximum number of iterations reached during IPF: {}'.format(
-                    max_iterations))
+                f"Maximum number of iterations reached during IPF: {max_iterations}"
+            )
 
     return pd.Series(constraints, index=joint_dist.index), iterations

@@ -15,8 +15,9 @@ def categorize(df, eval_d, index_cols=None):
         cat_df[index_cols] = df[index_cols]
         cat_df = cat_df.set_index(index_cols)
 
-    cat_df.columns = pd.MultiIndex.from_tuples(cat_df.columns,
-                                               names=['cat_name', 'cat_value'])
+    cat_df.columns = pd.MultiIndex.from_tuples(
+        cat_df.columns, names=["cat_name", "cat_value"]
+    )
 
     cat_df = cat_df.sort_index(axis=1)
 
@@ -66,19 +67,26 @@ def joint_distribution(sample_df, category_df, mapping_functions=None):
     category_names = list(category_df.index.names)
     if mapping_functions:
         for name in category_names:
-            assert name in mapping_functions, "Every category needs to have " \
-                                          "mapping function with the same a " \
-                                          "name to define that category for " \
-                                          "the pums sample records"
-            sample_df[name] = sample_df.apply(mapping_functions[name],
-                                              axis=1).astype('category')
+            assert name in mapping_functions, (
+                "Every category needs to have "
+                "mapping function with the same a "
+                "name to define that category for "
+                "the pums sample records"
+            )
+            sample_df[name] = sample_df.apply(
+                mapping_functions[name], axis=1
+            ).astype("category")
 
     category_df["frequency"] = sample_df.groupby(category_names).size()
     category_df["frequency"] = category_df["frequency"].fillna(0)
 
     # do the merge to add the category id
-    sample_df = pd.merge(sample_df, category_df[["cat_id"]],
-                         left_on=category_names, right_index=True)
+    sample_df = pd.merge(
+        sample_df,
+        category_df[["cat_id"]],
+        left_on=category_names,
+        right_index=True,
+    )
 
     return sample_df, category_df
 
@@ -88,7 +96,7 @@ def _frequency_table(sample_df, category_ids):
     Take the result that comes out of the method above and turn it in to the
     frequencytable format used by the ipu
     """
-    df = sample_df.groupby(['hh_id', 'cat_id']).size().unstack().fillna(0)
+    df = sample_df.groupby(["hh_id", "cat_id"]).size().unstack().fillna(0)
 
     # need to manually add in case we missed a whole cat_id in the sample
     missing_ids = list(set(category_ids) - set(df.columns))
@@ -96,7 +104,8 @@ def _frequency_table(sample_df, category_ids):
         missing_df = pd.DataFrame(
             data=np.zeros((len(df), len(missing_ids))),
             index=df.index,
-            columns=missing_ids)
+            columns=missing_ids,
+        )
         df = df.merge(missing_df, left_index=True, right_index=True)
 
     assert len(df.columns) == len(category_ids)
@@ -105,22 +114,25 @@ def _frequency_table(sample_df, category_ids):
     return df
 
 
-def frequency_tables(persons_sample_df, households_sample_df,
-                     person_cat_ids, household_cat_ids):
+def frequency_tables(
+    persons_sample_df, households_sample_df, person_cat_ids, household_cat_ids
+):
 
     households_sample_df.index.name = "hh_id"
-    households_sample_df = households_sample_df.reset_index().\
-        set_index("serialno")
+    households_sample_df = households_sample_df.reset_index().set_index(
+        "serialno"
+    )
 
-    h_freq_table = _frequency_table(households_sample_df,
-                                    household_cat_ids)
+    h_freq_table = _frequency_table(households_sample_df, household_cat_ids)
 
-    persons_sample_df = pd.merge(persons_sample_df,
-                                 households_sample_df[["hh_id"]],
-                                 left_on=["serialno"], right_index=True)
+    persons_sample_df = pd.merge(
+        persons_sample_df,
+        households_sample_df[["hh_id"]],
+        left_on=["serialno"],
+        right_index=True,
+    )
 
-    p_freq_table = _frequency_table(persons_sample_df,
-                                    person_cat_ids)
+    p_freq_table = _frequency_table(persons_sample_df, person_cat_ids)
     p_freq_table = p_freq_table.reindex(h_freq_table.index).fillna(0)
     assert len(h_freq_table) == len(p_freq_table)
 
