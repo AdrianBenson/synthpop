@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chisquare
 
-from .ipu.ipu import _FrequencyAndConstraints
+from synthpop.ipu.ipu import _FrequencyAndConstraints
 
 
 def simple_draw(num, weights, index):

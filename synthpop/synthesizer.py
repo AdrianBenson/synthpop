@@ -4,12 +4,12 @@ from collections import namedtuple
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chisquare
+# from scipy.stats import chisquare
 
-from . import categorizer as cat
-from . import draw
-from .ipf.ipf import calculate_constraints
-from .ipu.ipu import household_weights
+from synthpop import categorizer as cat
+from synthpop import draw
+from synthpop.ipf.ipf import calculate_constraints
+from synthpop.ipu.ipu import household_weights
 
 logger = logging.getLogger("synthpop")
 FitQuality = namedtuple(

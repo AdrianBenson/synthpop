@@ -1,10 +1,12 @@
 from functools import partial
 import multiprocessing
+# from os import name
 
 import pandas as pd
 
-from .synthesizer import synthesize, enable_logging
-from . import categorizer as cat
+# from synthpop.synthesizer import synthesize, enable_logging
+from synthpop.synthesizer import synthesize
+from synthpop import categorizer as cat
 
 
 def load_data(hh_marginal_file, person_marginal_file,
