@@ -1,5 +1,5 @@
-from .. import categorizer as cat
-from ..census_helpers import Census
+from synthpop import categorizer as cat
+from synthpop.census_helpers import Census
 import pandas as pd
 import numpy as np
 
@@ -40,94 +40,117 @@ class Starter:
     """
 
     def __init__(self, key, state, county, tract=None, acsyear=2016):
-        self.c = c = Census(key, acsyear)
+        self.c = Census(key, acsyear)
         self.state = state
         self.county = county
         self.tract = tract
         self.acsyear = acsyear
 
-        income_columns = ['B19001_0%02dE' % i for i in range(1, 18)]
-        vehicle_columns = ['B08201_0%02dE' % i for i in range(1, 7)]
-        workers_columns = ['B08202_0%02dE' % i for i in range(1, 6)]
-        families_columns = ['B11001_001E', 'B11001_002E']
+        income_columns = ["B19001_0%02dE" % i for i in range(1, 18)]
+        vehicle_columns = ["B08201_0%02dE" % i for i in range(1, 7)]
+        workers_columns = ["B08202_0%02dE" % i for i in range(1, 6)]
+        families_columns = ["B11001_001E", "B11001_002E"]
         block_group_columns = income_columns + families_columns
         tract_columns = vehicle_columns + workers_columns
-        h_acs = c.block_group_and_tract_query(
-            block_group_columns, tract_columns, state, county,
-            merge_columns=['tract', 'county', 'state'],
+        self.h_acs = self.c.block_group_and_tract_query(
+            block_group_columns,
+            tract_columns,
+            state,
+            county,
+            merge_columns=["tract", "county", "state"],
             block_group_size_attr="B11001_001E",
             tract_size_attr="B08201_001E",
-            tract=tract, year=acsyear)
-        self.h_acs = h_acs
+            tract=tract,
+            year=acsyear,
+        )
 
-        self.h_acs_cat = cat.categorize(h_acs, {
-            ("children", "yes"): "B11001_002E",
-            ("children", "no"): "B11001_001E - B11001_002E",
-            ("income", "lt35"): "B19001_002E + B19001_003E + B19001_004E + "
-                                "B19001_005E + B19001_006E + B19001_007E",
-            ("income", "gt35-lt100"): "B19001_008E + B19001_009E + "
-                                      "B19001_010E + B19001_011E + B19001_012E"
-                                      "+ B19001_013E",
-            ("income", "gt100"): "B19001_014E + B19001_015E + B19001_016E"
-                                 "+ B19001_017E",
-            ("cars", "none"): "B08201_002E",
-            ("cars", "one"): "B08201_003E",
-            ("cars", "two or more"): "B08201_004E + B08201_005E + B08201_006E",
-            ("workers", "none"): "B08202_002E",
-            ("workers", "one"): "B08202_003E",
-            ("workers", "two or more"): "B08202_004E + B08202_005E"
-        }, index_cols=['state', 'county', 'tract', 'block group'])
+        self.h_acs_cat = cat.categorize(
+            self.h_acs,
+            {
+                ("children", "yes"): "B11001_002E",
+                ("children", "no"): "B11001_001E - B11001_002E",
+                ("income", "lt35"): "B19001_002E + B19001_003E + B19001_004E + "
+                "B19001_005E + B19001_006E + B19001_007E",
+                ("income", "gt35-lt100"): "B19001_008E + B19001_009E + "
+                "B19001_010E + B19001_011E + B19001_012E"
+                "+ B19001_013E",
+                ("income", "gt100"): "B19001_014E + B19001_015E + B19001_016E"
+                "+ B19001_017E",
+                ("cars", "none"): "B08201_002E",
+                ("cars", "one"): "B08201_003E",
+                ("cars", "two or more"): "B08201_004E + B08201_005E + B08201_006E",
+                ("workers", "none"): "B08202_002E",
+                ("workers", "one"): "B08202_003E",
+                ("workers", "two or more"): "B08202_004E + B08202_005E",
+            },
+            index_cols=["state", "county", "tract", "block group"],
+        )
 
-        population = ['B01001_001E']
-        sex = ['B01001_002E', 'B01001_026E']
-        race = ['B02001_0%02dE' % i for i in range(1, 11)]
-        male_age_columns = ['B01001_0%02dE' % i for i in range(3, 26)]
-        female_age_columns = ['B01001_0%02dE' % i for i in range(27, 50)]
-        all_columns = population + sex + race + male_age_columns + \
-            female_age_columns
-        p_acs = c.block_group_query(all_columns, state, county, tract=tract, year=acsyear)
-        self.p_acs = p_acs
-        self.p_acs_cat = cat.categorize(p_acs, {
-            ("age", "19 and under"): (
-                "B01001_003E + B01001_004E + B01001_005E + "
-                "B01001_006E + B01001_007E + B01001_027E + "
-                "B01001_028E + B01001_029E + B01001_030E + "
-                "B01001_031E"),
-            ("age", "20 to 35"): "B01001_008E + B01001_009E + B01001_010E + "
-                                 "B01001_011E + B01001_012E + B01001_032E + "
-                                 "B01001_033E + B01001_034E + B01001_035E + "
-                                 "B01001_036E",
-            ("age", "35 to 60"): "B01001_013E + B01001_014E + B01001_015E + "
-                                 "B01001_016E + B01001_017E + B01001_037E + "
-                                 "B01001_038E + B01001_039E + B01001_040E + "
-                                 "B01001_041E",
-            ("age", "above 60"): "B01001_018E + B01001_019E + B01001_020E + "
-                                 "B01001_021E + B01001_022E + B01001_023E + "
-                                 "B01001_024E + B01001_025E + B01001_042E + "
-                                 "B01001_043E + B01001_044E + B01001_045E + "
-                                 "B01001_046E + B01001_047E + B01001_048E + "
-                                 "B01001_049E",
-            ("race", "white"):   "B02001_002E",
-            ("race", "black"):   "B02001_003E",
-            ("race", "asian"):   "B02001_005E",
-            ("race", "other"):   "B02001_004E + B02001_006E + B02001_007E + "
-                                 "B02001_008E",
-            ("sex", "male"):     "B01001_002E",
-            ("sex", "female"):   "B01001_026E"
-        }, index_cols=['state', 'county', 'tract', 'block group'])
+        population = ["B01001_001E"]
+        sex = ["B01001_002E", "B01001_026E"]
+        race = ["B02001_0%02dE" % i for i in range(1, 11)]
+        male_age_columns = ["B01001_0%02dE" % i for i in range(3, 26)]
+        female_age_columns = ["B01001_0%02dE" % i for i in range(27, 50)]
+        all_columns = population + sex + race + male_age_columns + female_age_columns
+
+        self.p_acs = self.c.block_group_query(
+            all_columns, state, county, tract=tract, year=acsyear
+        )
+        self.p_acs_cat = cat.categorize(
+            self.p_acs,
+            {
+                ("age", "19 and under"): (
+                    "B01001_003E + B01001_004E + B01001_005E + "
+                    "B01001_006E + B01001_007E + B01001_027E + "
+                    "B01001_028E + B01001_029E + B01001_030E + "
+                    "B01001_031E"
+                ),
+                ("age", "20 to 35"): "B01001_008E + B01001_009E + B01001_010E + "
+                "B01001_011E + B01001_012E + B01001_032E + "
+                "B01001_033E + B01001_034E + B01001_035E + "
+                "B01001_036E",
+                ("age", "35 to 60"): "B01001_013E + B01001_014E + B01001_015E + "
+                "B01001_016E + B01001_017E + B01001_037E + "
+                "B01001_038E + B01001_039E + B01001_040E + "
+                "B01001_041E",
+                ("age", "above 60"): "B01001_018E + B01001_019E + B01001_020E + "
+                "B01001_021E + B01001_022E + B01001_023E + "
+                "B01001_024E + B01001_025E + B01001_042E + "
+                "B01001_043E + B01001_044E + B01001_045E + "
+                "B01001_046E + B01001_047E + B01001_048E + "
+                "B01001_049E",
+                ("race", "white"): "B02001_002E",
+                ("race", "black"): "B02001_003E",
+                ("race", "asian"): "B02001_005E",
+                ("race", "other"): "B02001_004E + B02001_006E + B02001_007E + "
+                "B02001_008E",
+                ("sex", "male"): "B01001_002E",
+                ("sex", "female"): "B01001_026E",
+            },
+            index_cols=["state", "county", "tract", "block group"],
+        )
 
         # Put the needed PUMS variables here.  These are also the PUMS variables
         # that will be in the outputted synthetic population
-        self.h_pums_cols = ('serialno', 'PUMA10', 'RT', 'NP',
-                            'TYPE', 'VEH', 'WIF', 'NOC', 'FINCP')
-        self.p_pums_cols = ('serialno', 'PUMA10', 'AGEP', 'RAC1P', 'SEX')
+        self.h_pums_cols = (
+            "serialno",
+            "PUMA10",
+            "RT",
+            "NP",
+            "TYPE",
+            "VEH",
+            "WIF",
+            "NOC",
+            "FINCP",
+        )
+        self.p_pums_cols = ("serialno", "PUMA10", "AGEP", "RAC1P", "SEX")
 
         if self.acsyear < 2018:
             self.h_pums_cols = list(self.h_pums_cols)
-            self.h_pums_cols.insert(1, 'PUMA00')
+            self.h_pums_cols.insert(1, "PUMA00")
             self.h_pums_cols = tuple(self.h_pums_cols)
             self.p_pums_cols = list(self.p_pums_cols)
-            self.p_pums_cols.insert(1, 'PUMA00')
+            self.p_pums_cols.insert(1, "PUMA00")
             self.p_pums_cols = tuple(self.p_pums_cols)
 
     def get_geography_name(self):
@@ -155,11 +178,13 @@ class Starter:
         puma10, puma00 = c.tract_to_puma(ind.state, ind.county, ind.tract)
         # this is cached so won't download more than once
         if type(puma00) == str:
-            h_pums = self.c.download_household_pums(ind.state, puma10, puma00,
-                                                    usecols=self.h_pums_cols)
+            h_pums = self.c.download_household_pums(
+                ind.state, puma10, puma00, usecols=self.h_pums_cols
+            )
         elif np.isnan(puma00):  # only puma10 available
-            h_pums = self.c.download_household_pums(ind.state, puma10, None,
-                                                    usecols=self.h_pums_cols)
+            h_pums = self.c.download_household_pums(
+                ind.state, puma10, None, usecols=self.h_pums_cols
+            )
 
         def cars_cat(r):
             if r.VEH == 0:
@@ -192,8 +217,12 @@ class Starter:
         h_pums, jd_households = cat.joint_distribution(
             h_pums,
             cat.category_combinations(self.h_acs_cat.columns),
-            {"cars": cars_cat, "children": children_cat,
-             "income": income_cat, "workers": workers_cat}
+            {
+                "cars": cars_cat,
+                "children": children_cat,
+                "income": income_cat,
+                "workers": workers_cat,
+            },
         )
         return h_pums, jd_households
 
@@ -203,11 +232,13 @@ class Starter:
         puma10, puma00 = c.tract_to_puma(ind.state, ind.county, ind.tract)
         # this is cached so won't download more than once
         if type(puma00) == str:
-            p_pums = self.c.download_population_pums(ind.state, puma10, puma00,
-                                                     usecols=self.p_pums_cols)
+            p_pums = self.c.download_population_pums(
+                ind.state, puma10, puma00, usecols=self.p_pums_cols
+            )
         elif np.isnan(puma00):  # only puma10 available
-            p_pums = self.c.download_population_pums(ind.state, puma10, None,
-                                                     usecols=self.p_pums_cols)
+            p_pums = self.c.download_population_pums(
+                ind.state, puma10, None, usecols=self.p_pums_cols
+            )
 
         def age_cat(r):
             if r.AGEP <= 19:
@@ -235,6 +266,6 @@ class Starter:
         p_pums, jd_persons = cat.joint_distribution(
             p_pums,
             cat.category_combinations(self.p_acs_cat.columns),
-            {"age": age_cat, "race": race_cat, "sex": sex_cat}
+            {"age": age_cat, "race": race_cat, "sex": sex_cat},
         )
         return p_pums, jd_persons
