@@ -276,7 +276,9 @@ class Starter:
         # this is cached so won't download more than once
         if type(puma00) == str:
             h_pums = self.c.download_household_pums(
-                ind.state, puma10, puma00, usecols=selfHISP
+                ind.state, puma10, puma00, usecols=self.h_pums_cols
+            )
+            p_pums = self.c.download_population_pums(
                 ind.state, puma10, puma00, usecols=self.p_pums_cols
             )
         elif np.isnan(puma00):  # only puma10 available
@@ -286,6 +288,8 @@ class Starter:
             p_pums = self.c.download_population_pums(
                 ind.state, puma10, None, usecols=self.p_pums_cols
             )
+        else:
+            raise ValueError("h_pums & p_pums not set")
 
         h_pums = h_pums.set_index("serialno")
 

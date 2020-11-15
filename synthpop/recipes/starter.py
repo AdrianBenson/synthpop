@@ -185,6 +185,8 @@ class Starter:
             h_pums = self.c.download_household_pums(
                 ind.state, puma10, None, usecols=self.h_pums_cols
             )
+        else:
+            raise ValueError("h_pums not set")
 
         def cars_cat(r):
             if r.VEH == 0:
@@ -239,6 +241,8 @@ class Starter:
             p_pums = self.c.download_population_pums(
                 ind.state, puma10, None, usecols=self.p_pums_cols
             )
+        else:
+            raise ValueError("p_pums not set")
 
         def age_cat(r):
             if r.AGEP <= 19:
