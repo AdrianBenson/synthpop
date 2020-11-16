@@ -1,8 +1,8 @@
 import census
-import pandas as pd
 import numpy as np
-import us
+import pandas as pd
 import requests
+import us
 
 # code to retry when census api fails
 sess = requests.Session()

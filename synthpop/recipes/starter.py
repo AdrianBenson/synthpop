@@ -1,4 +1,4 @@
-from synthpop import categorizer as cat
+from synthpop import categorizer as categorizer
 from synthpop.census_helpers import Census
 import pandas as pd
 import numpy as np
@@ -64,7 +64,7 @@ class Starter:
             year=acsyear,
         )
 
-        self.h_acs_cat = cat.categorize(
+        self.h_acs_cat = categorizer.categorize(
             self.h_acs,
             {
                 ("children", "yes"): "B11001_002E",
@@ -96,7 +96,7 @@ class Starter:
         self.p_acs = self.c.block_group_query(
             all_columns, state, county, tract=tract, year=acsyear
         )
-        self.p_acs_cat = cat.categorize(
+        self.p_acs_cat = categorizer.categorize(
             self.p_acs,
             {
                 ("age", "19 and under"): (
@@ -196,9 +196,7 @@ class Starter:
             return "two or more"
 
         def children_cat(r):
-            if r.NOC > 0:
-                return "yes"
-            return "no"
+            return "yes" if r.NOC > 0 else "no"
 
         def income_cat(r):
             if r.FINCP > 100000:
@@ -216,9 +214,9 @@ class Starter:
                 return "one"
             return "none"
 
-        h_pums, jd_households = cat.joint_distribution(
+        h_pums, jd_households = categorizer.joint_distribution(
             h_pums,
-            cat.category_combinations(self.h_acs_cat.columns),
+            categorizer.category_combinations(self.h_acs_cat.columns),
             {
                 "cars": cars_cat,
                 "children": children_cat,
@@ -267,9 +265,9 @@ class Starter:
                 return "male"
             return "female"
 
-        p_pums, jd_persons = cat.joint_distribution(
+        p_pums, jd_persons = categorizer.joint_distribution(
             p_pums,
-            cat.category_combinations(self.p_acs_cat.columns),
+            categorizer.category_combinations(self.p_acs_cat.columns),
             {"age": age_cat, "race": race_cat, "sex": sex_cat},
         )
         return p_pums, jd_persons

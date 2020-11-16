@@ -1,5 +1,3 @@
-from __future__ import division
-
 import numpy as np
 import pandas as pd
 from scipy.stats import chisquare
@@ -227,7 +225,7 @@ def draw_households(
     fac = _FrequencyAndConstraints(household_freq, household_constraints)
 
     best_chisq = np.inf
-
+    best_households = best_people = best_p = None
     for _ in range(20):
         indexes = _draw_indexes(num, fac, weights)
         synth_hh, synth_people = execute_draw(

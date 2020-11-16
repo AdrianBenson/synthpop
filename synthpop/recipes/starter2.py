@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from synthpop import categorizer as cat
+from synthpop import categorizer
 from synthpop.census_helpers import Census
 
 
@@ -85,7 +85,7 @@ class Starter:
             year=acsyear,
         )
 
-        self.h_acs_cat = cat.categorize(
+        self.h_acs_cat = categorizer.categorize(
             self.h_acs,
             {
                 ("sf_detached", "yes"): "B25032_003E + B25032_014E",
@@ -163,7 +163,7 @@ class Starter:
         self.p_acs = c.block_group_query(
             all_columns, state, county, tract=tract, year=acsyear
         )
-        self.p_acs_cat = cat.categorize(
+        self.p_acs_cat = categorizer.categorize(
             self.p_acs,
             {
                 (
@@ -387,9 +387,9 @@ class Starter:
                 return "rent recent"
             return "rent not recent"
 
-        h_pums, jd_households = cat.joint_distribution(
+        h_pums, jd_households = categorizer.joint_distribution(
             h_pums,
-            cat.category_combinations(self.h_acs_cat.columns),
+            categorizer.category_combinations(self.h_acs_cat.columns),
             {
                 "hh_cars": cars_cat,
                 "hh_children": children_cat,
@@ -446,9 +446,9 @@ class Starter:
         def hispanic_cat(r):
             return "no" if r.HISP == 1 else "yes"
 
-        p_pums, jd_persons = cat.joint_distribution(
+        p_pums, jd_persons = categorizer.joint_distribution(
             p_pums,
-            cat.category_combinations(self.p_acs_cat.columns),
+            categorizer.category_combinations(self.p_acs_cat.columns),
             {
                 "person_age": age_cat,
                 "race": race_cat,

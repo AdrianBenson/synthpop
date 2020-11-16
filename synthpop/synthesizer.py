@@ -2,14 +2,15 @@ import logging
 import sys
 from collections import namedtuple
 
-import numpy as np
 import pandas as pd
-# from scipy.stats import chisquare
 
-from synthpop import categorizer as cat
+from synthpop import categorizer
 from synthpop import draw
 from synthpop.ipf.ipf import calculate_constraints
 from synthpop.ipu.ipu import household_weights
+
+# from scipy.stats import chisquare
+
 
 logger = logging.getLogger("synthpop")
 FitQuality = namedtuple("FitQuality", ("people_chisq", "people_p"))
@@ -67,7 +68,7 @@ def synthesize(
     p_constraint.index = p_jd.cat_id
 
     # make frequency tables that the ipu expects
-    household_freq, person_freq = cat.frequency_tables(
+    household_freq, person_freq = categorizer.frequency_tables(
         p_pums, h_pums, p_jd.cat_id, h_jd.cat_id
     )
 

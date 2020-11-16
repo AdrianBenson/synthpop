@@ -1,12 +1,11 @@
-from functools import partial
 import multiprocessing
-# from os import name
+from functools import partial
 
 import pandas as pd
 
+from synthpop import categorizer
 # from synthpop.synthesizer import synthesize, enable_logging
 from synthpop.synthesizer import synthesize
-from synthpop import categorizer as cat
 
 
 def load_data(
@@ -165,13 +164,13 @@ def synthesize_zone(hh_marg, p_marg, hh_sample, p_sample, xwalk):
     stats : pandas.DataFrame
         chi-square and p-score values for marginal geography drawn
     """
-    hhs, hh_jd = cat.joint_distribution(
+    hhs, hh_jd = categorizer.joint_distribution(
         hh_sample[hh_sample.sample_geog == xwalk[1]],
-        cat.category_combinations(hh_marg.columns),
+        categorizer.category_combinations(hh_marg.columns),
     )
-    ps, p_jd = cat.joint_distribution(
+    ps, p_jd = categorizer.joint_distribution(
         p_sample[p_sample.sample_geog == xwalk[1]],
-        cat.category_combinations(p_marg.columns),
+        categorizer.category_combinations(p_marg.columns),
     )
     households, people, people_chisq, people_p = synthesize(
         hh_marg.loc[xwalk[0]],
@@ -188,9 +187,7 @@ def synthesize_zone(hh_marg, p_marg, hh_sample, p_sample, xwalk):
     return households, people, stats
 
 
-def multiprocess_synthesize(
-    hh_marg, p_marg, hh_sample, p_sample, xwalk, cores=False
-):
+def multiprocess_synthesize(hh_marg, p_marg, hh_sample, p_sample, xwalk, cores=False):
     """
     Synthesize for a set of marginal geographies via multiprocessing
 
