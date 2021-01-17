@@ -41,7 +41,7 @@ def sum_accross_category(df, subtract_mean=True):
 
 def category_combinations(index):
     """
-    THis method converts a hierarchical multindex of category names and
+    This method converts a hierarchical multindex of category names and
     category values into the cross-product of all possible
     category combinations.
     """
@@ -49,13 +49,14 @@ def category_combinations(index):
     for cat_name, cat_value in index:
         d.setdefault(cat_name, [])
         d[cat_name].append(cat_value)
-    for cat_name in list(d):
-        if len(d[cat_name]) == 1:
+    for cat_name, cat_values in d.items():
+        if len(cat_values) == 1:
             del d[cat_name]
     df = pd.DataFrame(list(itertools.product(*list(d.values()))))
     df.columns = cols = list(d.keys())
     df.index.name = "cat_id"
     df = df.reset_index().set_index(cols)
+
     return df
 
 
@@ -67,15 +68,18 @@ def joint_distribution(sample_df, category_df, mapping_functions=None):
     category_names = list(category_df.index.names)
     if mapping_functions:
         for name in category_names:
-            assert name in mapping_functions, (
-                "Every category needs to have "
-                "mapping function with the same a "
-                "name to define that category for "
-                "the pums sample records"
+            if name not in mapping_functions:
+                print(
+                    "Every category needs to have "
+                    "mapping function with the same a "
+                    "name to define that category for "
+                    "the pums sample records"
+                )
+                raise ValueError(f"No mapping function for category {name}")
+            # TODO: WTF is "category" type?
+            sample_df[name] = sample_df.apply(mapping_functions[name], axis=1).astype(
+                "category"
             )
-            sample_df[name] = sample_df.apply(
-                mapping_functions[name], axis=1
-            ).astype("category")
 
     category_df["frequency"] = sample_df.groupby(category_names).size()
     category_df["frequency"] = category_df["frequency"].fillna(0)
@@ -87,7 +91,6 @@ def joint_distribution(sample_df, category_df, mapping_functions=None):
         left_on=category_names,
         right_index=True,
     )
-
     return sample_df, category_df
 
 
@@ -119,9 +122,7 @@ def frequency_tables(
 ):
 
     households_sample_df.index.name = "hh_id"
-    households_sample_df = households_sample_df.reset_index().set_index(
-        "serialno"
-    )
+    households_sample_df = households_sample_df.reset_index().set_index("serialno")
 
     h_freq_table = _frequency_table(households_sample_df, household_cat_ids)
 
