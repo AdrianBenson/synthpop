@@ -138,3 +138,6 @@ dmypy.json
 cython_debug/
 
 *.code-workspace
+.idea/
+.pytest_cache
+.vscode/
