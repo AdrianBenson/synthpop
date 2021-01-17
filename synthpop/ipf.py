@@ -4,7 +4,7 @@ import pandas as pd
 
 def calculate_constraints(marginals, joint_dist, tolerance=1e-3, max_iterations=1000):
     """
-    Calculate constraints on household or person classes using
+    Calculate constraints on household or person classes from
     single category marginals and the observed class proportions
     in a population sample.
 
@@ -42,7 +42,7 @@ def calculate_constraints(marginals, joint_dist, tolerance=1e-3, max_iterations=
     """
     flat_joint_dist = joint_dist.reset_index()
 
-    constraints = joint_dist.values.copy().astype("float")
+    constraints = joint_dist.to_numpy(dtype=float).copy()
     prev_constraints = constraints.copy()
     prev_constraints += tolerance  # ensure we run at least one iteration
 
@@ -52,7 +52,7 @@ def calculate_constraints(marginals, joint_dist, tolerance=1e-3, max_iterations=
     iterations = 0
 
     list_of_loc = [
-        ((flat_joint_dist[idx[0]] == idx[1]).values, marginals[idx])
+        ((flat_joint_dist[idx[0]] == idx[1]).to_numpy(), marginals[idx])
         for idx in marginals.index
     ]
 

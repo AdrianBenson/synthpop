@@ -2,9 +2,9 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
-from pandas.util import testing as pdt
+# from pandas.util import testing as pdt
 
-from .. import ipu
+from synthpop import ipu
 
 
 @pytest.fixture(scope='module')
@@ -175,7 +175,7 @@ def test_household_weights_max_iter(
             person_constraints, convergence=1e-7, max_iterations=10)
 
 
-def test_FrequencyAndConstraints(freq_wrap):
+def test_frequencyandconstraints(freq_wrap):
     assert freq_wrap.ncols == 5
     assert len(list(freq_wrap.iter_columns())) == 5
 

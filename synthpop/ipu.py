@@ -22,20 +22,17 @@ def _drop_zeros(df):
 
     """
 
-    def for_each_col(col):
-        nz = col.nonzero()[0]
-        return col[nz], nz
-
-    for (col_idx, (col, nz)) in df.apply(for_each_col, axis=0, raw=True).items():
-        yield (col_idx, col, nz)
+    for col_name, col_vals in df.items():
+        i = col_vals.to_numpy().nonzero()[0]
+        yield col_name, col_vals.to_numpy()[i], i
 
 
-class _FrequencyAndConstraints(object):
+class FrequencyAndConstraints:
     """
     Wrap frequency tables and constraints for both household and
     person classes for easy iteration over all of them.
 
-    Also tracks the locations of non-zero elements in each column
+    Also, track locations of non-zero elements in each column
     of the frequency tables. If including person classes, both
     `person_freq` and `person_constraints` are required.
 
@@ -50,7 +47,8 @@ class _FrequencyAndConstraints(object):
         Target marginal constraints for household classes.
         Index must be the same as the columns of `household_freq`.
     person_freq : pandas.DataFrame, optional
-        Frequency table for household person. Columns should be
+        Frequency table for household persons
+        . Columns should be
         a MultiIndex matching the index of `person_constraints` and
         index should be household IDs matching the index of
         `household_freq`.
@@ -93,7 +91,7 @@ class _FrequencyAndConstraints(object):
 
         """
         Check for problems in the resulting keys.
-        These typically arise when column names are shared accross
+        These typically arise when column names are shared across
         households and persons.
         """
         keys = set([c[0] for c in self.iter_columns()])
@@ -155,8 +153,8 @@ def _fit_quality(column, weights, constraint):
 
     Returns
     -------
-    quality : float
-
+    float
+        The fit quality.
     """
     return abs((column * weights).sum() - constraint) / constraint
 
@@ -165,7 +163,7 @@ def _average_fit_quality(freq_wrap, weights):
     """
     Parameters
     ----------
-    freq_wrap : `_FrequencyAndConstraints`
+    freq_wrap : `FrequencyAndConstraints`
     weights : ndarray
         Array of weights for all households.
 
@@ -183,8 +181,8 @@ def _update_weights(column, weights, constraint):
     """
     Update household weights based on a single column.
 
-    The update will be applied to all weights, so make sure only the
-    non-zero elements of `column` and the corresponding weights are given.
+    Will be applied to all weights, so ensure that only the
+    non-zero elements of `column` and corresponding weights are provided.
 
     Parameters
     ----------
@@ -199,11 +197,14 @@ def _update_weights(column, weights, constraint):
 
     Returns
     -------
-    new_weights : ndarray
+    ndarray
+        The updated weights.
 
     """
-    adj = constraint / float((column * weights).sum())
-    return weights * adj
+
+    if weights.size == 0:
+        return weights
+    return weights * constraint / (column * weights).sum().astype(float)
 
 
 def household_weights(
@@ -225,8 +226,8 @@ def household_weights(
         a MultiIndex matching the index of `household_constraints` and
         index should be household IDs matching the index of
         `person_freq`.
-    person_Freq : pandas.DataFrame
-        Frequency table for household person. Columns should be
+    person_freq : pandas.DataFrame
+        Frequency table for household persons. Columns should be
         a MultiIndex matching the index of `person_constraints` and
         index should be household IDs matching the index of
         `household_freq`.
@@ -240,7 +241,7 @@ def household_weights(
         When the average fit quality metric changes by less than this value
         after an iteration we declare done and send back the weights
         from the best fit.
-    max_iterations, int, optional
+    max_iterations : int, optional
         Maximum number of iterations to do before stopping and raising
         an exception.
 
@@ -256,7 +257,7 @@ def household_weights(
     weights = np.ones(len(household_freq), dtype="float")
     best_weights = weights.copy()
 
-    freq_wrap = _FrequencyAndConstraints(
+    freq_wrap = FrequencyAndConstraints(
         household_freq, household_constraints, person_freq, person_constraints
     )
 
