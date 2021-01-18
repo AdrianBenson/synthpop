@@ -6,17 +6,13 @@ import pandas as pd
 
 from synthpop import categorizer
 from synthpop import draw
-from synthpop.ipf.ipf import calculate_constraints
-from synthpop.ipu.ipu import household_weights
-
-# from scipy.stats import chisquare
+from synthpop.ipf import calculate_constraints
+from synthpop.ipu import household_weights
 
 
 logger = logging.getLogger("synthpop")
 FitQuality = namedtuple("FitQuality", ("people_chisq", "people_p"))
-BlockGroupID = namedtuple(
-    "BlockGroupID", ("state", "county", "tract", "block_group")
-)
+BlockGroupID = namedtuple("BlockGroupID", ("state", "county", "tract", "block_group"))
 
 
 def enable_logging():
@@ -61,7 +57,7 @@ def synthesize(
     logger.debug("Person constraint")
     logger.debug(p_constraint)
 
-    # modify person cat ids so they are unique when combined with households
+    # modify person cat_id's to ensure they are unique when combined with households
     p_starting_cat_id = h_jd["cat_id"].max() + 1
     p_jd["cat_id"] += p_starting_cat_id
     p_pums["cat_id"] += p_starting_cat_id
@@ -118,15 +114,14 @@ def synthesize_all(
     -------
     households, people : pandas.DataFrame
     fit_quality : dict of FitQuality
-        Keys are geographic IDs, values are namedtuples with attributes
+        Keys are geographic IDs, values are named tuples with attributes
         ``.household_chisq``, ``household_p``, ``people_chisq``,
         and ``people_p``.
 
     """
     print(
-        "Synthesizing at geog level: '{}' (number of geographies is {})".format(
-            recipe.get_geography_name(), recipe.get_num_geographies()
-        )
+        f"Synthesizing at geog level: '{recipe.get_geography_name()}'"
+        f"(number of geographies = {recipe.get_num_geographies()})"
     )
 
     if indexes is None:
@@ -195,4 +190,4 @@ def synthesize_all(
     all_households = pd.concat(hh_list)
     all_persons = pd.concat(people_list, ignore_index=True)
 
-    return (all_households, all_persons, fit_quality)
+    return all_households, all_persons, fit_quality

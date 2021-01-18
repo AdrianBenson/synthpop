@@ -4,8 +4,9 @@ from functools import partial
 import pandas as pd
 
 from synthpop import categorizer
-# from synthpop.synthesizer import synthesize, enable_logging
 from synthpop.synthesizer import synthesize
+
+# from synthpop.synthesizer import enable_logging
 
 
 def load_data(
@@ -36,7 +37,7 @@ def load_data(
     p_sample : pandas.DataFrame
         person sample table
     xwalk : list of tuples
-        list of marginal-to-sample geography crosswalks to iterate over
+        list of marginal-to-sample geography crosswalks to iterate over.
     """
     hh_sample = pd.read_csv(hh_sample_file)
     p_sample = pd.read_csv(person_sample_file)
@@ -73,7 +74,7 @@ def synthesize_all_zones(hh_marg, p_marg, hh_sample, p_sample, xwalk):
     p_sample : pandas.DataFrame
         person sample table
     xwalk : list of tuples
-        list of marginal-to-sample geography crosswalks to iterate over
+        list of marginal-to-sample geography crosswalks to iterate over.
 
     Returns
     -------
@@ -82,7 +83,7 @@ def synthesize_all_zones(hh_marg, p_marg, hh_sample, p_sample, xwalk):
     all_persons : pandas.DataFrame
         synthesized person records
     all_stats : pandas.DataFrame
-        chi-square and p-score values for each marginal geography drawn
+        chi-square and p-score values for each marginal geography drawn.
     """
     hh_list = []
     people_list = []
@@ -100,12 +101,12 @@ def synthesize_all_zones(hh_marg, p_marg, hh_sample, p_sample, xwalk):
         #     hh_index_start = households.index.values[-1] + 1
     all_households = pd.concat(hh_list)
     all_persons = pd.concat(people_list)
-    all_households, all_persons = synch_hhids(all_households, all_persons)
+    all_households, all_persons = sync_hhids(all_households, all_persons)
     all_stats = pd.DataFrame(stats_list)
     return all_households, all_persons, all_stats
 
 
-def synch_hhids(households, persons):
+def sync_hhids(households, persons):
     """
     Synchronize household ids with corresponding person records
 
@@ -121,7 +122,7 @@ def synch_hhids(households, persons):
     households : pandas.DataFrame
         households table with reindexed sequential household ids
     persons : pandas.DataFrame
-        persons table synchronized with updated household ids
+        persons table synchronized with updated household ids.
     """
     households["hh_id"] = households.index
     households["household_id"] = range(1, len(households.index) + 1)
@@ -153,7 +154,7 @@ def synthesize_zone(hh_marg, p_marg, hh_sample, p_sample, xwalk):
     p_sample : pandas.DataFrame
         person sample table
     xwalk : tuple
-        tuple of marginal-to-sample geography crosswalk
+        marginal-to-sample geography crosswalk.
 
     Returns
     -------
@@ -228,5 +229,5 @@ def multiprocess_synthesize(hh_marg, p_marg, hh_sample, p_sample, xwalk, cores=F
     all_stats = pd.DataFrame([result[2] for result in results])
     all_households = pd.concat(hh_list)
     all_persons = pd.concat(people_list)
-    all_households, all_persons = synch_hhids(all_households, all_persons)
+    all_households, all_persons = sync_hhids(all_households, all_persons)
     return all_persons, all_households, all_stats

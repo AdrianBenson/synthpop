@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chisquare
 
-from synthpop.ipu.ipu import _FrequencyAndConstraints
+from synthpop.ipu import FrequencyAndConstraints
 
 
 def simple_draw(num, weights, index):
@@ -39,7 +39,7 @@ def _draw_indexes(num, fac, weights):
     ----------
     num : int
         The total number of households to draw.
-    fac : _FrequencyAndConstraints
+    fac : FrequencyAndConstraints
     weights : pandas.Series
 
     Returns
@@ -222,7 +222,7 @@ def draw_households(
             1,
         )
 
-    fac = _FrequencyAndConstraints(household_freq, household_constraints)
+    fac = FrequencyAndConstraints(household_freq, household_constraints)
 
     best_chisq = np.inf
     best_households = best_people = best_p = None
